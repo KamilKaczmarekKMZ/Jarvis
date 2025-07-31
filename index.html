@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Chat</title>
+    <title>Neon Webhook Chat z Obsługą Głosu</title>
     <style>
-        /* Reset i podstawy */
+        /* Reset i tło */
         * {
             margin: 0;
             padding: 0;
@@ -14,301 +14,514 @@
         }
         
         body {
-            background-color: #0f0f10;
+            background-color: #000;
             color: #d6d6e6;
             height: 100vh;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
         }
-        
-        /* Grid tło */
-        .grid {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(to right, #0f0f10 1px, transparent 1px),
-                linear-gradient(to bottom, #0f0f10 1px, transparent 1px);
-            background-size: 20px 20px;
-            z-index: -2;
-            pointer-events: none;
-        }
-        
+
         /* Kontener czatu */
         .chat-container {
-            flex: 1;
             display: flex;
             flex-direction: column;
+            height: 90vh;
+            width: 95%;
             max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px;
+            background-color: rgba(15, 15, 16, 0.9);
+            border-radius: 15px;
+            border: 1px solid #3d3a4f;
             overflow: hidden;
-        }
-        
-        /* Nagłówek */
-        .chat-header {
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
             position: relative;
-            margin-bottom: 20px;
+        }
+
+        /* Spinner WEWNĄTRZ kontenera czatu */
+        .chat-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 25px rgba(186, 66, 255, 0.7));
         }
         
-        .chat-title {
-            font-size: 1.8rem;
-            background: linear-gradient(90deg, #b6a9b7, #dfa2da);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-align: center;
-            padding: 10px 0;
+        .spinner {
+            background-image: linear-gradient(rgb(186, 66, 255) 35%, rgb(0, 225, 255));
+            width: 100px;
+            height: 100px;
+            animation: spinning 1.7s linear infinite;
+            border-radius: 50px;
+            filter: blur(1px);
+            box-shadow: 
+                0px -5px 25px 0px rgba(186, 66, 255, 0.9),
+                0px 5px 25px 0px rgba(0, 225, 255, 0.9);
         }
         
+        .spinner-inner {
+            background-color: rgba(36, 36, 36, 0.3);
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
+            filter: blur(8px);
+        }
+
+        @keyframes spinning {
+            to { transform: rotate(360deg); }
+        }
+
         /* Okno wiadomości */
-        .messages {
+        #messages {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            background-color: rgba(22, 19, 41, 0.7);
-            backdrop-filter: blur(5px);
-            border: 1px solid #2a2740;
+            padding: 25px;
+            position: relative;
+            z-index: 2;
             scrollbar-width: thin;
             scrollbar-color: #402fb5 #161329;
         }
         
-        .messages::-webkit-scrollbar {
-            width: 6px;
+        #messages::-webkit-scrollbar {
+            width: 8px;
         }
         
-        .messages::-webkit-scrollbar-track {
+        #messages::-webkit-scrollbar-track {
             background: #161329;
         }
         
-        .messages::-webkit-scrollbar-thumb {
+        #messages::-webkit-scrollbar-thumb {
             background-color: #402fb5;
-            border-radius: 3px;
+            border-radius: 4px;
         }
-        
-        /* Pojedyncza wiadomość */
+
         .message {
-            margin-bottom: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            max-width: 80%;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            border-radius: 10px;
+            max-width: 85%;
             position: relative;
             word-wrap: break-word;
-            animation: fadeIn 0.3s ease-out;
+            animation: fadeIn 0.4s ease-out;
+            line-height: 1.4;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
         }
         
         .user-message {
-            background: linear-gradient(135deg, #402fb5, #6e1b60);
+            background: rgba(64, 47, 181, 0.35);
+            border: 1px solid #4a3bc0;
             margin-left: auto;
-            border-bottom-right-radius: 2px;
+            box-shadow: 0 2px 12px rgba(64, 47, 181, 0.2);
         }
         
         .bot-message {
-            background: rgba(28, 25, 28, 0.8);
-            border: 1px solid #3d3a4f;
+            background: rgba(28, 25, 28, 0.9);
+            border: 1px solid #4a475f;
             margin-right: auto;
-            border-bottom-left-radius: 2px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
         }
-        
-        /* Pole wprowadzania */
+
+        /* Pole wprowadzania (ulepszone) */
+        #poda {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: rgba(1, 2, 1, 0.6);
+            position: relative;
+            z-index: 2;
+        }
+
         .input-container {
-            position: relative;
-            margin-top: auto;
-        }
-        
-        .input-wrapper {
-            position: relative;
-            max-width: 100%;
-        }
-        
-        .chat-input {
+            display: flex;
+            align-items: center;
             width: 100%;
-            padding: 16px 60px 16px 20px;
-            background-color: #010201;
-            border: none;
-            border-radius: 10px;
-            color: #d6d6e6;
-            font-size: 16px;
-            caret-color: #cf30aa;
+            max-width: 500px;
         }
-        
-        .chat-input::placeholder {
-            color: #5a5565;
-        }
-        
-        .chat-input:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(207, 48, 170, 0.3);
-        }
-        
-        .send-button {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, #cf30aa, #402fb5);
+
+        .voice-btn {
+            background: rgba(207, 48, 170, 0.3);
             border: none;
             width: 40px;
             height: 40px;
-            border-radius: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
         }
-        
-        .send-button:hover {
-            transform: translateY(-50%) scale(1.05);
+
+        .voice-btn:hover {
+            background: rgba(207, 48, 170, 0.5);
+            transform: scale(1.1);
         }
-        
-        .send-icon {
+
+        .voice-btn.recording {
+            animation: pulse 1.5s infinite;
+            background: rgba(255, 0, 0, 0.5);
+        }
+
+        .voice-icon {
             width: 20px;
             height: 20px;
-            stroke: white;
         }
-        
-        /* Efekty neonowe */
-        .glow-effect {
-            position: absolute;
-            width: 100%;
+
+        .white, .border, .darkBorderBg, .glow {
+            max-height: 70px;
+            max-width: 314px;
             height: 100%;
-            top: 0;
-            left: 0;
-            border-radius: 10px;
+            width: 100%;
+            position: absolute;
             overflow: hidden;
             z-index: -1;
+            border-radius: 12px;
+            filter: blur(3px);
+        }
+
+        .input {
+            flex: 1;
+            background-color: #010201;
+            border: none;
+            height: 56px;
+            border-radius: 10px;
+            color: white;
+            padding-inline: 59px;
+            font-size: 18px;
+            caret-color: #cf30aa;
+        }
+
+        .input::placeholder {
+            color: #5a5565;
+            transition: all 0.3s;
+        }
+
+        .input:focus::placeholder {
+            opacity: 0.5;
+        }
+
+        .input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(207, 48, 170, 0.4);
+        }
+
+        #main:focus-within > #input-mask {
+            display: none;
+        }
+
+        #input-mask {
             pointer-events: none;
-        }
-        
-        .glow-effect::before {
-            content: "";
+            width: 100px;
+            height: 20px;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(45deg);
-            width: 150%;
-            height: 150%;
-            background: conic-gradient(
-                rgba(0, 0, 0, 0),
-                #402fb5,
-                rgba(0, 0, 0, 0) 20%,
-                rgba(0, 0, 0, 0) 50%,
-                #cf30aa,
-                rgba(0, 0, 0, 0) 70%
-            );
-            opacity: 0.3;
-            animation: rotate 8s linear infinite;
+            background: linear-gradient(90deg, transparent, #010201);
+            top: 18px;
+            left: 70px;
+            transition: all 0.5s;
         }
-        
+
+        #pink-mask {
+            pointer-events: none;
+            width: 30px;
+            height: 20px;
+            position: absolute;
+            background: #cf30aa;
+            top: 10px;
+            left: 5px;
+            filter: blur(20px);
+            opacity: 0.8;
+            transition: all 1s;
+        }
+
+        #main:hover > #pink-mask {
+            opacity: 0;
+            transform: translateX(10px);
+        }
+
         /* Animacje */
-        @keyframes rotate {
-            100% {
-                transform: translate(-50%, -50%) rotate(405deg);
-            }
+        @keyframes spinning {
+            to { transform: rotate(360deg); }
         }
-        
+
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Responsywność */
-        @media (max-width: 768px) {
-            .chat-container {
-                padding: 10px;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+
+        /* Indykator nagrywania */
+        .recording-indicator {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .recording-dot {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 <body>
-    <div class="grid"></div>
-    
+    <!-- Główny kontener czatu -->
     <div class="chat-container">
-        <div class="chat-header">
-            <h1 class="chat-title">Neon Chat</h1>
-        </div>
-        
-        <div class="messages" id="messages">
-            <div class="message bot-message">
-                Witaj! Wpisz wiadomość, a wyślę ją do webhooka.
+        <!-- Spinner WEWNĄTRZ kontenera czatu -->
+        <div class="chat-spinner">
+            <div class="spinner">
+                <div class="spinner-inner"></div>
             </div>
         </div>
         
-        <div class="input-container">
-            <div class="input-wrapper">
-                <div class="glow-effect"></div>
-                <input type="text" class="chat-input" id="messageInput" placeholder="Napisz wiadomość...">
-                <button class="send-button" id="sendButton">
-                    <svg class="send-icon" viewBox="0 0 24 24">
-                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
-                    </svg>
-                </button>
+        <!-- Okno wiadomości -->
+        <div id="messages">
+            <div class="message bot-message">
+                Witaj! Możesz pisać lub mówić - wiadomości będą wysyłane do webhooka.
+            </div>
+        </div>
+        
+        <!-- Pole wprowadzania -->
+        <div id="poda">
+            <div class="glow"></div>
+            <div class="darkBorderBg"></div>
+            <div class="darkBorderBg"></div>
+            <div class="darkBorderBg"></div>
+            <div class="white"></div>
+            <div class="border"></div>
+            
+            <div id="main">
+                <div class="input-container">
+                    <button class="voice-btn" id="voiceButton" title="Naciśnij i przytrzymaj, aby nagrywać">
+                        <svg class="voice-icon" viewBox="0 0 24 24" fill="none" stroke="#d6d6e6" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+                    <input placeholder="Napisz wiadomość lub naciśnij ikonę mikrofonu..." 
+                           type="text" 
+                           id="messageInput" 
+                           class="input" />
+                    <div id="input-mask"></div>
+                    <div id="pink-mask"></div>
+                    <div class="filterBorder"></div>
+                    <div id="filter-icon">
+                        <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none">
+                            <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 13.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" stroke-width="1" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </div>
+                    <div id="search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" height="24" fill="none" class="feather feather-search">
+                            <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
+                            <line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line>
+                            <defs>
+                                <linearGradient gradientTransform="rotate(50)" id="search">
+                                    <stop stop-color="#f8e7f8" offset="0%"></stop>
+                                    <stop stop-color="#b6a9b7" offset="50%"></stop>
+                                </linearGradient>
+                                <linearGradient id="searchl">
+                                    <stop stop-color="#b6a9b7" offset="0%"></stop>
+                                    <stop stop-color="#837484" offset="50%"></stop>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Indykator nagrywania -->
+    <div class="recording-indicator" id="recordingIndicator">
+        <div class="recording-dot"></div>
+        Nagrywanie... Zwolnij przycisk, aby wysłać
+    </div>
+
     <script>
         // Elementy DOM
-        const messagesDiv = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
+        const messagesDiv = document.getElementById('messages');
+        const filterIcon = document.getElementById('filter-icon');
+        const chatSpinner = document.querySelector('.chat-spinner');
+        const voiceButton = document.getElementById('voiceButton');
+        const recordingIndicator = document.getElementById('recordingIndicator');
         
-        // Dodawanie wiadomości
-        function addMessage(text, isUser = false) {
+        // Inicjalizacja
+        let recognition;
+        let isRecording = false;
+        
+        // Sprawdź czy przeglądarka obsługuje Web Speech API
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'pl-PL';
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                voiceButton.classList.add('recording');
+                recordingIndicator.style.display = 'flex';
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                if (transcript.trim()) {
+                    addMessage(transcript, true);
+                    sendToWebhook(transcript);
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Błąd rozpoznawania mowy:', event.error);
+                addMessage("Błąd rozpoznawania mowy", false);
+            };
+            
+            recognition.onend = function() {
+                isRecording = false;
+                voiceButton.classList.remove('recording');
+                recordingIndicator.style.display = 'none';
+            };
+        } else {
+            voiceButton.style.display = 'none';
+            addMessage("Twoja przeglądarka nie obsługuje rozpoznawania mowy", false);
+        }
+        
+        // Obsługa przycisku głosowego
+        voiceButton.addEventListener('mousedown', startRecording);
+        voiceButton.addEventListener('touchstart', startRecording);
+        
+        voiceButton.addEventListener('mouseup', stopRecording);
+        voiceButton.addEventListener('touchend', stopRecording);
+        voiceButton.addEventListener('mouseleave', stopRecording);
+        
+        function startRecording(e) {
+            e.preventDefault();
+            if (recognition && !isRecording) {
+                recognition.start();
+            }
+        }
+        
+        function stopRecording(e) {
+            e.preventDefault();
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+        }
+        
+        // Ukryj spinner gdy są wiadomości
+        function updateSpinnerVisibility() {
+            if (messagesDiv.children.length > 1) {
+                chatSpinner.style.opacity = '0';
+                setTimeout(() => {
+                    chatSpinner.style.display = 'none';
+                }, 300);
+            } else {
+                chatSpinner.style.display = 'block';
+                setTimeout(() => {
+                    chatSpinner.style.opacity = '0.8';
+                }, 10);
+            }
+        }
+        
+        // Wysyłanie wiadomości po Enter
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const message = messageInput.value.trim();
+                if (message) {
+                    addMessage(message, true);
+                    messageInput.value = '';
+                    sendToWebhook(message);
+                    updateSpinnerVisibility();
+                }
+            }
+        });
+        
+        // Opcjonalne: kliknięcie ikony filtra
+        filterIcon.addEventListener('click', function() {
+            addMessage("Funkcja filtrowania będzie dostępna wkrótce!", false);
+        });
+        
+        function addMessage(text, isUser) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
             messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
-            messageElement.textContent = text;
+            
+            // Dodaj ikonę dla wiadomości głosowych
+            if (isUser && text.startsWith("(Głos) ")) {
+                messageElement.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" style="vertical-align: middle; margin-right: 5px;">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    </svg>
+                    ${text.substring(7)}
+                `;
+            } else {
+                messageElement.textContent = text;
+            }
+            
             messagesDiv.appendChild(messageElement);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
         
-        // Wysyłanie wiadomości
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
+        function sendToWebhook(message) {
+            // Tutaj podmień na swój webhook
+            const webhookUrl = 'TWÓJ_WEBHOOK_URL';
             
-            addMessage(message, true);
-            messageInput.value = '';
+            // Pokazuj spinner podczas oczekiwania na odpowiedź
+            chatSpinner.style.display = 'block';
+            chatSpinner.style.opacity = '0.8';
             
-            // Tutaj wyślij do webhooka
-            fetch('TWÓJ_WEBHOOK_URL', {
+            fetch(webhookUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    timestamp: new Date().toISOString(),
+                    type: isRecording ? 'voice' : 'text'
+                })
             })
             .then(response => response.json())
             .then(data => {
-                addMessage(data.response || "Otrzymałem twoją wiadomość");
+                addMessage(data.response || "Otrzymałem twoją wiadomość", false);
+                updateSpinnerVisibility();
             })
             .catch(error => {
-                addMessage("Błąd połączenia z webhookiem");
+                addMessage("Błąd połączenia z webhookiem", false);
                 console.error('Error:', error);
+                updateSpinnerVisibility();
             });
         }
         
-        // Obsługa zdarzeń
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        // Inicjalizacja
+        updateSpinnerVisibility();
     </script>
 </body>
 </html>
