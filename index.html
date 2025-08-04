@@ -1,527 +1,983 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Webhook Chat z Obsługą Głosu</title>
+    <title>MultiBot Chat</title>
     <style>
-        /* Reset i tło */
+        :root {
+            --company1-color: #4361ee;
+            --company1-gradient: linear-gradient(135deg, #4361ee, #3a56d4);
+            
+            --bg-color: #0a0a0a;
+            --card-bg: #1a1a1a;
+            --text-color: #e0e0e0;
+            --text-light: #8d99ae;
+            --border-color: #2a2a2a;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --transition-all: all 0.3s ease;
+            --primary-color: #4361ee;
+            --error-color: #f72585;
+            --gold-accent: #ffe0a6;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
-            background-color: #000;
-            color: #d6d6e6;
-            height: 100vh;
+            background-color: var(--bg-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            padding: 10px;
         }
 
-        /* Kontener czatu */
-        .chat-container {
+        #user-form {
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            max-height: 100%;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            height: 90vh;
-            width: 95%;
-            max-width: 800px;
-            background-color: rgba(15, 15, 16, 0.9);
-            border-radius: 15px;
-            border: 1px solid #3d3a4f;
+            justify-content: center;
+            gap: 1rem;
+            border: 1px solid transparent;
+            border-image: linear-gradient(transparent, var(--gold-accent), transparent) 1;
+            border-width: 0 2px 0px 2px;
+            background: radial-gradient(
+                100% 61.73% at 100% 50%,
+                rgba(255, 224, 166, 0.05) 0%,
+                transparent 100%
+                ),
+                radial-gradient(
+                91.09% 56.23% at 0% 50%,
+                rgba(255, 224, 166, 0.05) 0%,
+                transparent 100%
+                );
+            position: relative;
             overflow: hidden;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
-            position: relative;
         }
 
-        /* Spinner WEWNĄTRZ kontenera czatu */
-        .chat-spinner {
+        #user-form::before,
+        #user-form::after {
+            content: "";
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1;
-            opacity: 0.8;
-            filter: drop-shadow(0 0 25px rgba(186, 66, 255, 0.7));
-        }
-        
-        .spinner {
-            background-image: linear-gradient(rgb(186, 66, 255) 35%, rgb(0, 225, 255));
-            width: 100px;
-            height: 100px;
-            animation: spinning 1.7s linear infinite;
-            border-radius: 50px;
-            filter: blur(1px);
-            box-shadow: 
-                0px -5px 25px 0px rgba(186, 66, 255, 0.9),
-                0px 5px 25px 0px rgba(0, 225, 255, 0.9);
-        }
-        
-        .spinner-inner {
-            background-color: rgba(36, 36, 36, 0.3);
-            width: 100px;
-            height: 100px;
-            border-radius: 50px;
-            filter: blur(8px);
+            border: 1px solid transparent;
+            border: inherit;
+            z-index: -1;
         }
 
-        @keyframes spinning {
-            to { transform: rotate(360deg); }
+        #user-form::before {
+            inset: -1rem;
+            opacity: 15%;
         }
 
-        /* Okno wiadomości */
-        #messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 25px;
+        #user-form::after {
+            inset: -2rem;
+            opacity: 5%;
+        }
+
+        .form-header {
+            margin-bottom: 1rem;
+        }
+
+        .form-header h2 {
+            color: var(--gold-accent);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.3rem;
+            text-transform: uppercase;
+            background: linear-gradient(rgb(210, 210, 210), rgb(150, 150, 150));
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-header h3 {
+            color: var(--text-light);
+            font-weight: 300;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+            text-align: center;
+        }
+
+        .form-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            color: var(--text-light);
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
+            margin-left: 0.5rem;
+        }
+
+        .form-group input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
+            border-image: radial-gradient(
+                circle,
+                rgba(255, 255, 255, 0.445) 0%,
+                rgba(0, 0, 0, 0) 100%
+            ) 1;
+            border-width: 0 0 1px 0;
+            padding: 0.7rem 0.9rem;
+            color: white;
+            font-size: 1rem;
+            transition: var(--transition-all);
+            width: 100%;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            color: var(--gold-accent);
+            background: radial-gradient(
+                47.3% 73.08% at 50% 94.23%,
+                rgba(255, 224, 166, 0.1) 5%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            border-image: radial-gradient(circle, var(--gold-accent) 0%, transparent 100%) 1;
+        }
+
+        #continue-btn {
+            width: 100%;
             position: relative;
-            z-index: 2;
-            scrollbar-width: thin;
-            scrollbar-color: #402fb5 #161329;
+            background: none;
+            border: none;
+            padding: 0.8rem;
+            color: var(--gold-accent);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition-all);
+            background: radial-gradient(
+                100% 45% at 100% 50%,
+                rgba(255, 224, 166, 0.084) 0%,
+                rgba(115, 115, 115, 0) 100%
+                ),
+                radial-gradient(
+                100% 45% at 0% 50%,
+                rgba(255, 224, 166, 0.084) 0%,
+                rgba(115, 115, 115, 0) 100%
+                );
+            border: 1px solid transparent;
+            border-image: linear-gradient(transparent, var(--gold-accent), transparent) 1;
+            border-width: 0 1px 0 1px;
+            opacity: 0.5;
+            pointer-events: none;
+            margin-top: 0.5rem;
+            transform-origin: center;
         }
-        
-        #messages::-webkit-scrollbar {
+
+        #continue-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #continue-btn:hover {
+            transform: scale(1.02);
+            background: radial-gradient(
+                100% 45% at 100% 50%,
+                rgba(255, 224, 166, 0.15) 0%,
+                rgba(115, 115, 115, 0) 100%
+                ),
+                radial-gradient(
+                100% 45% at 0% 50%,
+                rgba(255, 224, 166, 0.15) 0%,
+                rgba(115, 115, 115, 0) 100%
+                );
+            box-shadow: 0 0 15px rgba(255, 224, 166, 0.2);
+        }
+
+        #continue-btn:active {
+            transform: scale(0.98);
+        }
+
+        #welcome-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .welcome-content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+            border: 1px solid var(--gold-accent);
+        }
+
+        .welcome-content h2 {
+            color: var(--gold-accent);
+            margin-bottom: 15px;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+        }
+
+        .welcome-content p {
+            color: var(--text-light);
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+
+        #chat-container {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            max-height: -webkit-fill-available;
+            padding: 0.5rem;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 0.5rem;
+            border: 1px solid transparent;
+            border-image: linear-gradient(transparent, var(--gold-accent), transparent) 1;
+            border-width: 0 2px 0px 2px;
+            background: radial-gradient(
+                100% 61.73% at 100% 50%,
+                rgba(255, 224, 166, 0.05) 0%,
+                transparent 100%
+                ),
+                radial-gradient(
+                91.09% 56.23% at 0% 50%,
+                rgba(255, 224, 166, 0.05) 0%,
+                transparent 100%
+                );
+            position: relative;
+            overflow: hidden;
+        }
+
+        #chat-container::before,
+        #chat-container::after {
+            content: "";
+            position: absolute;
+            border: 1px solid transparent;
+            border: inherit;
+            z-index: -1;
+        }
+
+        #chat-container::before {
+            inset: -1rem;
+            opacity: 15%;
+        }
+
+        #chat-container::after {
+            inset: -2rem;
+            opacity: 5%;
+        }
+
+        #chat-header {
+            background: transparent;
+            color: var(--gold-accent);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 224, 166, 0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        #chat-header h2 {
+            font-weight: 600;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: var(--gold-accent);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            font-size: clamp(0.7rem, 2vw, 0.8rem);
+            opacity: 0.9;
+            color: var(--text-light);
+        }
+
+        .status-dot {
             width: 8px;
+            height: 8px;
+            background: #4ad66d;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1.5s infinite;
         }
-        
-        #messages::-webkit-scrollbar-track {
-            background: #161329;
+
+        #chat-messages {
+            flex-grow: 1;
+            padding: 0.5rem 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border-bottom: 1px solid rgba(255, 224, 166, 0.1);
+            scrollbar-width: thin;
+            scrollbar-color: var(--gold-accent) transparent;
         }
-        
-        #messages::-webkit-scrollbar-thumb {
-            background-color: #402fb5;
+
+        #chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--gold-accent);
             border-radius: 4px;
+            border: 2px solid transparent;
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 224, 166, 0.8);
         }
 
         .message {
-            padding: 14px 18px;
-            margin-bottom: 16px;
-            border-radius: 10px;
-            max-width: 85%;
-            position: relative;
-            word-wrap: break-word;
-            animation: fadeIn 0.4s ease-out;
+            max-width: 90%;
+            padding: 8px 12px;
+            border-radius: 8px;
             line-height: 1.4;
-            font-size: 16px;
-            backdrop-filter: blur(5px);
-        }
-        
-        .user-message {
-            background: rgba(64, 47, 181, 0.35);
-            border: 1px solid #4a3bc0;
-            margin-left: auto;
-            box-shadow: 0 2px 12px rgba(64, 47, 181, 0.2);
-        }
-        
-        .bot-message {
-            background: rgba(28, 25, 28, 0.9);
-            border: 1px solid #4a475f;
-            margin-right: auto;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Pole wprowadzania (ulepszone) */
-        #poda {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background-color: rgba(1, 2, 1, 0.6);
+            font-size: clamp(0.85rem, 3vw, 0.95rem);
             position: relative;
-            z-index: 2;
+            animation: fadeIn 0.3s ease-out;
         }
 
-        .input-container {
+        .user-message {
+            background: rgba(255, 224, 166, 0.1);
+            color: var(--gold-accent);
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+            border: 1px solid rgba(255, 224, 166, 0.2);
+        }
+
+        .bot-message {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .message-time {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 4px;
+            opacity: 0.7;
+            text-align: right;
+            color: var(--text-light);
+        }
+
+        #chat-input-container {
             display: flex;
+            padding: 0;
+            background: transparent;
+            gap: 6px;
             align-items: center;
-            width: 100%;
-            max-width: 500px;
+            padding-top: 0.5rem;
         }
 
-        .voice-btn {
-            background: rgba(207, 48, 170, 0.3);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .voice-btn:hover {
-            background: rgba(207, 48, 170, 0.5);
-            transform: scale(1.1);
-        }
-
-        .voice-btn.recording {
-            animation: pulse 1.5s infinite;
-            background: rgba(255, 0, 0, 0.5);
-        }
-
-        .voice-icon {
-            width: 20px;
-            height: 20px;
-        }
-
-        .white, .border, .darkBorderBg, .glow {
-            max-height: 70px;
-            max-width: 314px;
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            overflow: hidden;
-            z-index: -1;
-            border-radius: 12px;
-            filter: blur(3px);
-        }
-
-        .input {
-            flex: 1;
-            background-color: #010201;
-            border: none;
-            height: 56px;
-            border-radius: 10px;
-            color: white;
-            padding-inline: 59px;
-            font-size: 18px;
-            caret-color: #cf30aa;
-        }
-
-        .input::placeholder {
-            color: #5a5565;
-            transition: all 0.3s;
-        }
-
-        .input:focus::placeholder {
-            opacity: 0.5;
-        }
-
-        .input:focus {
+        #chat-input {
+            flex-grow: 1;
+            padding: 10px 12px;
+            border-radius: 4px;
             outline: none;
-            box-shadow: 0 0 0 2px rgba(207, 48, 170, 0.4);
+            font-size: clamp(0.85rem, 3vw, 0.95rem);
+            transition: var(--transition-all);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid transparent;
+            border-image: linear-gradient(transparent, var(--gold-accent), transparent) 1;
+            border-width: 0 0 1px 0;
+            width: 100%;
         }
 
-        #main:focus-within > #input-mask {
+        #chat-input:focus {
+            color: var(--gold-accent);
+            background: radial-gradient(
+                47.3% 73.08% at 50% 94.23%,
+                rgba(255, 224, 166, 0.1) 5%,
+                rgba(0, 0, 0, 0) 100%
+            );
+            border-image: radial-gradient(circle, var(--gold-accent) 0%, transparent 100%) 1;
+        }
+
+        #send-btn, #report-btn {
+            background: rgba(255, 224, 166, 0.1);
+            color: var(--gold-accent);
+            border: 1px solid rgba(255, 224, 166, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: var(--transition-all);
+            flex-shrink: 0;
+        }
+
+        #send-btn:hover, #report-btn:hover {
+            background: rgba(255, 224, 166, 0.2);
+            transform: translateY(-2px);
+        }
+
+        #report-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
             display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
         }
 
-        #input-mask {
-            pointer-events: none;
-            width: 100px;
-            height: 20px;
-            position: absolute;
-            background: linear-gradient(90deg, transparent, #010201);
-            top: 18px;
-            left: 70px;
-            transition: all 0.5s;
+        .report-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            animation: fadeIn 0.3s ease-out;
+            border: 1px solid var(--error-color);
         }
 
-        #pink-mask {
-            pointer-events: none;
-            width: 30px;
-            height: 20px;
-            position: absolute;
-            background: #cf30aa;
-            top: 10px;
-            left: 5px;
-            filter: blur(20px);
-            opacity: 0.8;
-            transition: all 1s;
+        .report-content h3 {
+            color: var(--error-color);
+            margin-bottom: 15px;
+            font-size: clamp(1.1rem, 3vw, 1.3rem);
         }
 
-        #main:hover > #pink-mask {
-            opacity: 0;
-            transform: translateX(10px);
+        .report-content p {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-size: clamp(0.9rem, 3vw, 1rem);
         }
 
-        /* Animacje */
-        @keyframes spinning {
-            to { transform: rotate(360deg); }
+        #report-text {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            min-height: 100px;
+            resize: vertical;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .report-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-all);
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+
+        #cancel-report {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        #submit-report {
+            background: var(--error-color);
+            color: white;
+            border: none;
+        }
+
+        #thank-you-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+            border: 1px solid var(--gold-accent);
+            color: var(--gold-accent);
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            text-align: center;
+            max-width: 90%;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
-        }
-
-        /* Indykator nagrywania */
-        .recording-indicator {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(255, 0, 0, 0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            display: none;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .recording-dot {
-            width: 10px;
-            height: 10px;
-            background-color: white;
-            border-radius: 50%;
-            margin-right: 10px;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
+            0% { opacity: 1; }
             50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            align-self: flex-start;
+            gap: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-light);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @media (max-height: 700px) {
+            #user-form {
+                padding: 1rem;
+                gap: 0.8rem;
+            }
+            
+            .form-header h2 {
+                letter-spacing: 0.2rem;
+                margin-bottom: 0.3rem;
+            }
+            
+            .form-group {
+                gap: 4px;
+            }
+            
+            .form-group input {
+                padding: 0.6rem 0.8rem;
+            }
+            
+            #continue-btn {
+                padding: 0.7rem;
+            }
+        }
+
+        @media (max-height: 600px) {
+            #user-form {
+                padding: 0.8rem;
+                gap: 0.6rem;
+            }
+            
+            .form-header h2 {
+                font-size: clamp(1.2rem, 4vw, 1.5rem);
+                letter-spacing: 0.1rem;
+            }
+            
+            .form-group input {
+                padding: 0.5rem 0.7rem;
+            }
+            
+            .form-header {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        @media (max-height: 500px) {
+            #user-form {
+                padding: 0.5rem;
+                gap: 0.4rem;
+            }
+            
+            .form-header h2 {
+                font-size: clamp(1rem, 4vw, 1.2rem);
+                margin-bottom: 0.2rem;
+            }
+            
+            .form-header h3 {
+                display: none;
+            }
+            
+            .form-group input {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.9rem;
+            }
+            
+            #continue-btn {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Główny kontener czatu -->
-    <div class="chat-container">
-        <!-- Spinner WEWNĄTRZ kontenera czatu -->
-        <div class="chat-spinner">
-            <div class="spinner">
-                <div class="spinner-inner"></div>
+    <!-- Initial Form -->
+    <div id="user-form">
+        <div class="form-header">
+            <h2>MultiBot</h2>
+            <h3>Please enter your details to continue</h3>
+        </div>
+        <div class="form-group">
+            <label for="first-name">First Name</label>
+            <input type="text" id="first-name" placeholder="Enter your first name" required>
+        </div>
+        <div class="form-group">
+            <label for="last-name">Last Name</label>
+            <input type="text" id="last-name" placeholder="Enter your last name" required>
+        </div>
+        <div class="form-group">
+            <label for="user-email">Email</label>
+            <input type="email" id="user-email" placeholder="Enter your email" required>
+        </div>
+        <button id="continue-btn">Continue</button>
+    </div>
+
+    <!-- Welcome Message -->
+    <div id="welcome-message">
+        <div class="welcome-content">
+            <h2>Welcome, <span id="welcome-name"></span>!</h2>
+            <p>Please remember that all conversations are recorded and stored in our database.</p>
+        </div>
+    </div>
+
+    <!-- Chat Container - initially hidden -->
+    <div id="chat-container">
+        <div id="chat-header">
+            <h2>Chat with Soholighting</h2>
+            <div class="status">
+                <span class="status-dot"></span>
+                Online
             </div>
         </div>
         
-        <!-- Okno wiadomości -->
-        <div id="messages">
+        <div id="chat-messages">
             <div class="message bot-message">
-                Witaj! Możesz pisać lub mówić - wiadomości będą wysyłane do webhooka.
+                Welcome to Soholighting! How can I help you?
+                <span class="message-time">Now</span>
             </div>
         </div>
         
-        <!-- Pole wprowadzania -->
-        <div id="poda">
-            <div class="glow"></div>
-            <div class="darkBorderBg"></div>
-            <div class="darkBorderBg"></div>
-            <div class="darkBorderBg"></div>
-            <div class="white"></div>
-            <div class="border"></div>
-            
-            <div id="main">
-                <div class="input-container">
-                    <button class="voice-btn" id="voiceButton" title="Naciśnij i przytrzymaj, aby nagrywać">
-                        <svg class="voice-icon" viewBox="0 0 24 24" fill="none" stroke="#d6d6e6" stroke-width="2">
-                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                            <line x1="12" y1="19" x2="12" y2="23"></line>
-                            <line x1="8" y1="23" x2="16" y2="23"></line>
-                        </svg>
-                    </button>
-                    <input placeholder="Napisz wiadomość lub naciśnij ikonę mikrofonu..." 
-                           type="text" 
-                           id="messageInput" 
-                           class="input" />
-                    <div id="input-mask"></div>
-                    <div id="pink-mask"></div>
-                    <div class="filterBorder"></div>
-                    <div id="filter-icon">
-                        <svg preserveAspectRatio="none" height="27" width="27" viewBox="4.8 4.56 14.832 15.408" fill="none">
-                            <path d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 13.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z" stroke="#d6d6e6" stroke-width="1" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path>
-                        </svg>
-                    </div>
-                    <div id="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" height="24" fill="none" class="feather feather-search">
-                            <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
-                            <line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line>
-                            <defs>
-                                <linearGradient gradientTransform="rotate(50)" id="search">
-                                    <stop stop-color="#f8e7f8" offset="0%"></stop>
-                                    <stop stop-color="#b6a9b7" offset="50%"></stop>
-                                </linearGradient>
-                                <linearGradient id="searchl">
-                                    <stop stop-color="#b6a9b7" offset="0%"></stop>
-                                    <stop stop-color="#837484" offset="50%"></stop>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                </div>
+        <div id="chat-input-container">
+            <button id="report-btn" title="Report an issue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </button>
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button id="send-btn" title="Send message">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13"></path>
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Issue Modal -->
+    <div id="report-modal">
+        <div class="report-content">
+            <h3>Found a bug?</h3>
+            <p>Tell us more and we'll fix it as soon as possible.</p>
+            <textarea id="report-text" placeholder="Describe the issue you encountered..."></textarea>
+            <div class="report-actions">
+                <button class="report-btn" id="cancel-report">Cancel</button>
+                <button class="report-btn" id="submit-report">Submit</button>
             </div>
         </div>
     </div>
 
-    <!-- Indykator nagrywania -->
-    <div class="recording-indicator" id="recordingIndicator">
-        <div class="recording-dot"></div>
-        Nagrywanie... Zwolnij przycisk, aby wysłać
+    <!-- Thank you message -->
+    <div id="thank-you-message">
+        Thank you for your report!
     </div>
 
     <script>
-        // Elementy DOM
-        const messageInput = document.getElementById('messageInput');
-        const messagesDiv = document.getElementById('messages');
-        const filterIcon = document.getElementById('filter-icon');
-        const chatSpinner = document.querySelector('.chat-spinner');
-        const voiceButton = document.getElementById('voiceButton');
-        const recordingIndicator = document.getElementById('recordingIndicator');
-        
-        // Inicjalizacja
-        let recognition;
-        let isRecording = false;
-        
-        // Sprawdź czy przeglądarka obsługuje Web Speech API
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'pl-PL';
+        // User data
+        let userData = {
+            firstName: '',
+            lastName: '',
+            email: ''
+        };
+
+        // Report endpoint configuration
+        const reportEndpoint = "https://thekamilkaczmarek.app.n8n.cloud/webhook/ca65a89e-ae7a-41fb-aae4-473e181f5004";
+
+        // Form validation
+        const firstNameInput = document.getElementById('first-name');
+        const lastNameInput = document.getElementById('last-name');
+        const userEmailInput = document.getElementById('user-email');
+        const continueBtn = document.getElementById('continue-btn');
+
+        function validateForm() {
+            const isValid = firstNameInput.value.trim() !== '' && 
+                           lastNameInput.value.trim() !== '' && 
+                           userEmailInput.value.trim() !== '';
             
-            recognition.onstart = function() {
-                isRecording = true;
-                voiceButton.classList.add('recording');
-                recordingIndicator.style.display = 'flex';
-            };
-            
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                if (transcript.trim()) {
-                    addMessage(transcript, true);
-                    sendToWebhook(transcript);
-                }
-            };
-            
-            recognition.onerror = function(event) {
-                console.error('Błąd rozpoznawania mowy:', event.error);
-                addMessage("Błąd rozpoznawania mowy", false);
-            };
-            
-            recognition.onend = function() {
-                isRecording = false;
-                voiceButton.classList.remove('recording');
-                recordingIndicator.style.display = 'none';
-            };
-        } else {
-            voiceButton.style.display = 'none';
-            addMessage("Twoja przeglądarka nie obsługuje rozpoznawania mowy", false);
-        }
-        
-        // Obsługa przycisku głosowego
-        voiceButton.addEventListener('mousedown', startRecording);
-        voiceButton.addEventListener('touchstart', startRecording);
-        
-        voiceButton.addEventListener('mouseup', stopRecording);
-        voiceButton.addEventListener('touchend', stopRecording);
-        voiceButton.addEventListener('mouseleave', stopRecording);
-        
-        function startRecording(e) {
-            e.preventDefault();
-            if (recognition && !isRecording) {
-                recognition.start();
-            }
-        }
-        
-        function stopRecording(e) {
-            e.preventDefault();
-            if (recognition && isRecording) {
-                recognition.stop();
-            }
-        }
-        
-        // Ukryj spinner gdy są wiadomości
-        function updateSpinnerVisibility() {
-            if (messagesDiv.children.length > 1) {
-                chatSpinner.style.opacity = '0';
-                setTimeout(() => {
-                    chatSpinner.style.display = 'none';
-                }, 300);
+            if (isValid) {
+                continueBtn.classList.add('active');
             } else {
-                chatSpinner.style.display = 'block';
-                setTimeout(() => {
-                    chatSpinner.style.opacity = '0.8';
-                }, 10);
+                continueBtn.classList.remove('active');
             }
         }
-        
-        // Wysyłanie wiadomości po Enter
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const message = messageInput.value.trim();
-                if (message) {
-                    addMessage(message, true);
-                    messageInput.value = '';
-                    sendToWebhook(message);
-                    updateSpinnerVisibility();
-                }
-            }
-        });
-        
-        // Opcjonalne: kliknięcie ikony filtra
-        filterIcon.addEventListener('click', function() {
-            addMessage("Funkcja filtrowania będzie dostępna wkrótce!", false);
-        });
-        
-        function addMessage(text, isUser) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
+
+        firstNameInput.addEventListener('input', validateForm);
+        lastNameInput.addEventListener('input', validateForm);
+        userEmailInput.addEventListener('input', validateForm);
+
+        // Continue button handler
+        continueBtn.addEventListener('click', function() {
+            userData = {
+                firstName: firstNameInput.value.trim(),
+                lastName: lastNameInput.value.trim(),
+                email: userEmailInput.value.trim()
+            };
+
+            // Show welcome message
+            document.getElementById('welcome-name').textContent = 
+                `${userData.firstName} ${userData.lastName}`;
+            document.getElementById('welcome-message').style.display = 'flex';
             
-            // Dodaj ikonę dla wiadomości głosowych
-            if (isUser && text.startsWith("(Głos) ")) {
-                messageElement.innerHTML = `
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" style="vertical-align: middle; margin-right: 5px;">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    </svg>
-                    ${text.substring(7)}
+            // Hide form
+            document.getElementById('user-form').style.display = 'none';
+
+            // After 3 seconds, show chat
+            setTimeout(() => {
+                document.getElementById('welcome-message').style.display = 'none';
+                document.getElementById('chat-container').style.display = 'grid';
+                
+                // Update welcome message in chat
+                const welcomeMessage = `Welcome, ${userData.firstName}! How can I help you today?`;
+                chatHistory[0].text = welcomeMessage;
+                loadChatHistory();
+            }, 3000);
+        });
+
+        // Chat history initialization
+        const chatHistory = [{
+            sender: 'bot',
+            text: 'Welcome to Soholighting! How can I help you?',
+            time: 'Now'
+        }];
+        
+        // DOM elements
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const reportBtn = document.getElementById('report-btn');
+        const reportModal = document.getElementById('report-modal');
+        const cancelReportBtn = document.getElementById('cancel-report');
+        const submitReportBtn = document.getElementById('submit-report');
+        const thankYouMessage = document.getElementById('thank-you-message');
+
+        // Load chat history
+        function loadChatHistory() {
+            chatMessages.innerHTML = '';
+            
+            chatHistory.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.sender}-message`;
+                messageDiv.innerHTML = `
+                    ${msg.text}
+                    <span class="message-time">${msg.time}</span>
                 `;
-            } else {
-                messageElement.textContent = text;
-            }
+                chatMessages.appendChild(messageDiv);
+            });
             
-            messagesDiv.appendChild(messageElement);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-        
-        function sendToWebhook(message) {
-            // Tutaj podmień na swój webhook
-            const webhookUrl = 'TWÓJ_WEBHOOK_URL';
+
+        // Send message handler
+        function sendMessage() {
+            const messageText = chatInput.value.trim();
+            if (messageText === '') return;
             
-            // Pokazuj spinner podczas oczekiwania na odpowiedź
-            chatSpinner.style.display = 'block';
-            chatSpinner.style.opacity = '0.8';
+            // Add user message to chat
+            const userMessage = {
+                sender: 'user',
+                text: messageText,
+                time: getCurrentTime()
+            };
             
-            fetch(webhookUrl, {
+            chatHistory.push(userMessage);
+            loadChatHistory();
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send to backend
+            sendToBackend(messageText);
+        }
+
+        // Show typing indicator
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Hide typing indicator and add bot response
+        function addBotResponse(responseText) {
+            // Remove typing indicator
+            const typingIndicators = document.querySelectorAll('.typing-indicator');
+            typingIndicators.forEach(indicator => indicator.remove());
+            
+            // Add bot message
+            const botMessage = {
+                sender: 'bot',
+                text: responseText,
+                time: getCurrentTime()
+            };
+            
+            chatHistory.push(botMessage);
+            loadChatHistory();
+        }
+
+        // Get current time in HH:MM format
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Send message to backend
+        function sendToBackend(message) {
+            const endpoint = "https://thekamilkaczmarek.app.n8n.cloud/webhook/a8b1e5ee-609f-43a6-b341-889648e96892";
+            const payload = {
+                message: message,
+                user: userData,
+                company: "Soholighting",
+                timestamp: new Date().toISOString()
+            };
+            
+            fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    message: message,
-                    timestamp: new Date().toISOString(),
-                    type: isRecording ? 'voice' : 'text'
-                })
+                body: JSON.stringify(payload)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
             .then(data => {
-                addMessage(data.response || "Otrzymałem twoją wiadomość", false);
-                updateSpinnerVisibility();
+                const responseText = data.output || data.response || "Thanks for your message! We'll get back to you soon.";
+                addBotResponse(responseText);
             })
             .catch(error => {
-                addMessage("Błąd połączenia z webhookiem", false);
-                console.error('Error:', error);
-                updateSpinnerVisibility();
+                console.error('Error sending message:', error);
+                addBotResponse("Sorry, there was an error sending your message. Please try again.");
             });
         }
-        
-        // Inicjalizacja
-        updateSpinnerVisibility();
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Report issue functionality
+        reportBtn.addEventListener('click', function() {
+            reportModal.style.display = 'flex';
+        });
+
+        cancelReportBtn.addEventListener('click', function() {
+            reportModal.style.display = 'none';
+        });
+
+        submitReportBtn.addEventListener('click', function() {
+            const reportText = document.getElementById('report-text').value.trim();
+            if (reportText) {
+                // Prepare report data
+                const reportData = {
+                    type: "bug_report",
+                    user: userData,
+                    message: reportText,
+                    company: "Soholighting",
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href,
+                    userAgent: navigator.userAgent
+                };
+                
+                // Send report to webhook
+                fetch(reportEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(reportData)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error submitting report');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Report submitted successfully:', data);
+                    reportModal.style.display = 'none';
+                    thankYouMessage.style.display = 'block';
+                    document.getElementById('report-text').value = '';
+                    
+                    setTimeout(() => {
+                        thankYouMessage.style.display = 'none';
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error('Error submitting report:', error);
+                    alert('Failed to submit report. Please try again later.');
+                });
+            }
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === reportModal) {
+                reportModal.style.display = 'none';
+            }
+            if (event.target === document.getElementById('welcome-message')) {
+                document.getElementById('welcome-message').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
